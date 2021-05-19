@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Function Menu</title>
+    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+    <style>
+    ul.navbar {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color:#333333;
+    }
+
+    li.navbar {
+        float:left;
+    }
+
+    li a.navbar {
+        display:block;
+        color:white;
+        text-align:center;
+        padding:16px;
+        text-decoration:none;
+    }
+
+    li a:hover.navbar {
+        background-color:#111111;
+    }
+    .inline {
+    display: inline;
+    }
+
+    .link-button {
+      background: none;
+      border: none;
+      color: blue;
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 1em;
+      font-family: serif;
+    }
+    .link-button:focus {
+      outline: none;
+    }
+    .link-button:active {
+      color:red;
+    }
+    .hide {
+      position:absolute;
+      top:-10px;
+      left:-10px;
+      width:1px;
+      height:1px;
+    }
+    </style>
+</head>
+<body>
+    <iframe name="HiddenFrame" width="1" height="1" class="hide" id="hid1"></iframe>
+    <form method="post" action="/null" class="inline" target="HiddenFrame" id="form1">
+        <label for="inp1">
+            Post data to log
+        </label>
+        <input id="inp1" name="input">
+        <button type="submit" formaction="/logger" id="but1">
+            Log POST
+        </button><br>
+        <strong><label id="lab1"></label></strong>
+        <br><br>
+    </form>
+    <form method="get" action="/null" class="inline" target="HiddenFrame" id="form2">
+        <label for="inp2">
+            Post data to log
+        </label>
+        <input id="inp2" name="input">
+        <button type="submit" formaction="/crossword" id="but2">
+            Log POST
+        </button><br>
+        <strong><label id="lab2"></label></strong>
+        <br><br>
+    </form>
+    <form method="post" action="/null" class="inline" target="HiddenFrame" id="form3">
+        <label for="inp3">
+            Post data to log
+        </label>
+        <input id="inp3" name="input">
+        <button type="submit" formaction="/scrabble" id="but3">
+            Log POST
+        </button><br>
+        <strong><label id="lab3"></label></strong>
+        <br><br>
+    </form>
+    <script>
+        $("#but1").click(function(){
+            $.get("http://86.134.118.140:8084/funcs/anagram?input=leave", function(data, status){
+                var lab = document.getElementById("lab1");
+                lab.innerHTML = "Data: " + data + ",Status: " + status;
+                alert("Data: " + data + "\nStatus: " + status);
+            });
+        });
+        $("#but2").click(function(){
+            $.get("http://86.134.118.140:8084/funcs/anagram?input=leave", function(data, status){
+                var lab = document.getElementById("lab2");
+                lab.innerHTML = "Data: " + data + ",Status: " + status;
+                alert("Data: " + data + "\nStatus: " + status);
+            });
+        });
+        $("#but3").click(function(){
+            $.get("http://86.134.118.140:8084/funcs/anagram?input=leave", function(data, status){
+                var lab = document.getElementById("lab3");
+                lab.innerHTML = "Data: " + data + ",Status: " + status;
+                alert("Data: " + data + "\nStatus: " + status);
+            });
+        });
+    </script>
+</body>
+</html>

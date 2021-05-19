@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+ul.navbar {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color:#333333;
+}
+
+li.navbar {
+    float:left;
+}
+
+li a.navbar {
+    display:block;
+    color:white;
+    text-align:center;
+    padding:16px;
+    text-decoration:none;
+}
+
+li a:hover.navbar {
+    background-color:#111111;
+}
+
+</style>
+</head>
+<body style="background-color:powderblue;">
+
+<ul class="navbar">
+    <li class="navbar"><a class="navbar" href="Buy_Stuff_Home.html">Home</a></li>
+    <li class="navbar"><a class="navbar" href="Buy_Stuff_Contact.html">Contact</a></li>
+    <li class="navbar"><a class="navbar" href="#Buy">Buy</a></li>
+    <li class="navbar"><a class="navbar" href="Buy_Stuff_FAQ.html">FAQ</a></li>
+</ul>
+
+<h1>Welcome to the <b>Buy Stuff</b> shop</h1>
+
+<p>Click the product you would like to purchase<p>
+
+<script>
+var products = [(
+
+function ProInfo(i,proName,proDesc) {
+    this.proNum = i
+    this.proName = proName
+    this.proDesc = proDesc
+    this.print = function() {
+        document.write("<h2>" + this.proName + "</h2>");
+        document.write("<p>" + this.proDesc + "</p>");
+        document.write('<input type="button" value="Info" onclick="alert(i)">' + '<br>' + '<br>');
+    
+var i=0;
+for(;products.getlength();i++){
+    proArray.push(new ProInfo(i))
+    proArray[.print()
+}
+</script>
+<p></p>
+
+</body>
+</html>
