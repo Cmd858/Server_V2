@@ -47,12 +47,15 @@ class RequestHandler():
 
 
 def checkFiles(path):
-    print(path)
+    #print(path)
     try:
         f = open(f'files{path}', 'rb')
         return f.read(f.__sizeof__())
     except FileNotFoundError:
-        print('FNFerror')
+        #print('FNFerror')
+        return None
+    except OSError:
+        #print('OSerror')
         return None
 
 
