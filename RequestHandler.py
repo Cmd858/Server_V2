@@ -56,7 +56,7 @@ class RequestHandler():
                     else:
                         return 'Resource Not Found', 'str', 404  # return not found error
                 else:
-                    return file, 'bytes', 200  # successful request return
+                    return file, 'file', 200  # successful request return
         except TypeError:
             return 'Incorrect Method Type', 'str', 400
         except Exception as e:
@@ -70,32 +70,60 @@ class RequestHandler():
             bytedata = data
         else:
             raise TypeError('Invalid data type supplied by function')
-        #print(bytedata)
         return bytedata
 
-    def returnResponse(self, server, bytedata, response_code):
-        headers = {'Accept-Language': 'en', 'Content-Length': f'{len(bytedata)}'}  # set default header
-        server.send_response(response_code)  # send response code eg 200
-        for header in headers:
-            #print(header, headers[header])
-            server.send_header(header, headers[header])  # send every header in headers
-        server.end_headers()  # indicate that all headers have been sent
-        server.wfile.write(bytedata)  # write data to wfile bytestream
-        server.close_connection = True  # close connection, idk if this is necessary
-        #print(response_code)
-        #print(server.headers)
+    def chunkdata(self, file):
+        chunksize = 4096
+        while 1:
+            chunk = file.read(chunksize)
+            #print(chunk)
+            if not chunk:
+                break
+            yield chunk
+            #data = data[chunksize:]
+        #raise StopIteration
+
+    def returnResponse(self, server, data, response_code, datatype):
+        headers = {'Accept-Language': 'en'}
+        if datatype == 'file':
+            #print(os.path.getsize(data.name))
+            headers['Content-Length'] = f'{os.path.getsize(data.name)}'
+            server.send_response(response_code)  # send response code eg 200
+            for header in headers:
+                server.send_header(header, headers[header])  # send every header in headers
+            server.end_headers()  # indicate that all headers have been sent
+            for chunk in self.chunkdata(data):
+                server.wfile.write(chunk)
+            server.close_connection = True  # close connection, idk if this is necessary
+            log('File Upload Complete')
+            #print('filedone')
+        else:
+            headers['Content-Length'] = f'{data.__sizeof__()}'
+            server.send_response(response_code)  # send response code eg 200
+            for header in headers:
+                server.send_header(header, headers[header])  # send every header in headers
+            server.end_headers()  # indicate that all headers have been sent
+            #print(data)
+            server.wfile.write(data)
+            server.close_connection = True
+            #print('done')
+            log('Request Complete')
 
 
 def checkFiles(path):
     #print(path)
-    try:
-        f = open(f'files{path}', 'rb')
+    if 'favicon.ico' in path:
+        f = open(f'files/favicon.png', 'rb')
+        print('favicon.png')
         return f.read(f.__sizeof__())
+    try:
+        #  with open(f'files{path}', 'rb') as f:  # context manager closes file which can't happen
+        f = open(f'files{path}', 'rb')
+        #print(f.__sizeof__())
+        return f
     except FileNotFoundError:
-        #print('FNFerror')
         return None
     except OSError:
-        #print('OSerror')
         return None
 
 
@@ -129,3 +157,6 @@ def extractArgs(path):
             indexPoint = ampersandIndex  # set new index point to get next key value pair
     #print(args)
     return args  # return arguments
+
+def log(msg):
+    print(msg)
