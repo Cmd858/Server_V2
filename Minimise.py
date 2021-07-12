@@ -7,7 +7,7 @@ class ConsoleManager:
         self.exitCallback = exitCallback
         options = (("Activate Console", None, lambda x: self.ConsoleVisible(True)),
                    ("Deactivate Console", None, lambda x: self.ConsoleVisible(False)))
-        self.trayIcon = SysTrayIcon(None, 'Server_V2 Options', options, self.CallKillServer)
+        self.trayIcon = SysTrayIcon(None, 'Server_V2 Options', options, on_quit=self.CallKillServer)
 
     def ConsoleVisible(self, visBool):
         if visBool is False:
@@ -17,7 +17,8 @@ class ConsoleManager:
 
     def CallKillServer(self, systray):
         try:
-            SysTrayIcon.shutdown
+            pass
+            #SysTrayIcon.shutdown
         except Exception as e:
             print(e)
         self.exitCallback()

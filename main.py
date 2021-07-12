@@ -1,13 +1,14 @@
 import sys
-import time
+import colorama
+import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
-from RequestHandler import RequestHandler
-from SigListener import SigListener
+from RequestHandler import RequestHandler, log
 from Minimise import ConsoleManager
 from dotenv import load_dotenv
-import os
 
+
+sys.stderr = open('errorLog.txt', 'w+')
 
 load_dotenv()
 
@@ -26,8 +27,8 @@ class MyHandler(BaseHTTPRequestHandler):
     def processRequest(self):
         self.port = os.getenv('port')  # set port number
         self.handler = RequestHandler(self.port)  # get RequestHandler
-        data, rtype, response_code = self.handler.handleRequest(self)  # handle request and receive data, type and code
-        print(data, rtype, response_code)
+        data, rtype, response_code = self.handler.handleRequestBetter(self)  # handle request and receive data, type and code
+        log((data, rtype, response_code), 'info')
         if rtype == 'file':
             self.handler.returnResponse(self, data, response_code, rtype)  # send the response back to requester
         else:
@@ -38,34 +39,35 @@ class MyHandler(BaseHTTPRequestHandler):
 class threadedServer(ThreadingMixIn, HTTPServer):
     pass  # define a class that inherits above
 
-def runServer():
-    server_address = ('0.0.0.0', int(os.getenv('port')))
-    print(f'Server started on {server_address}')
-    httpdpy = threadedServer(server_address, MyHandler)  # multi-threaded
-    # httpdpy = HTTPServer(server_address, MyHandler)  # single-threaded
-    try:
-        httpdpy.serve_forever()  # start the server and serve forever
-    except (KeyboardInterrupt, SystemExit):  # except KeyBoardInterrupt
-        httpdpy.server_close()  # close server gracefully
-        print('Successfully exiting')
+class Main:
+    def __init__(self):
+        colorama.init()
+        self.mgr = self.ConsoleControl()
+        self.server_address = ('0.0.0.0', int(os.getenv('port')))
+        # self.httpdpy = HTTPServer(server_address, MyHandler)  # single-threaded
+        self.httpdpy = threadedServer(self.server_address, MyHandler)  # multi-threaded
+        self.runServer()  # start the server
 
-def ConsoleControl():
-    mgr = ConsoleManager(killServer)
-    mgr.StartTrayIcon()
+    def runServer(self):
+        log(f'Server started on {self.server_address}', 'info')
 
-def listen():
-    listener = SigListener(54320)  # get SigListener class
-    listener.start()  # starts listener
-    # depreciated because it requires 2 programs so bit useless tbh
+        try:
+            self.httpdpy.serve_forever(poll_interval=1)  # start the server and serve forever
+        except (KeyboardInterrupt, SystemExit, OSError) as e:  # except KeyBoardInterrupt
+            log(e, 'warning')
 
-def killServer():
-    raise SyntaxError
-    print('Exiting')
-    sys.exit(0)  # TODO: get this to work properly bc doesn't exit
 
-def main():
-    ConsoleControl()
-    runServer()  # start the server
+    def ConsoleControl(self):
+        mgr = ConsoleManager(self.killServer)
+        mgr.StartTrayIcon()
+        return mgr
+
+    def killServer(self):
+        log('Exiting', 'info')
+        self.httpdpy.shutdown()  # close server gracefully
+        colorama.deinit()
+        sys.exit()
+
 
 if __name__ == '__main__':
-    main()
+    Main()

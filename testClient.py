@@ -6,7 +6,8 @@ import os
 
 load_dotenv()
 
-ip = os.getenv('ip')
+#ip = os.getenv('ip')
+ip = '127.0.0.1'
 
 headers = {'user-agent': 'Python script', 'Content-Length': str(b'bytes :)'.__sizeof__())}
 
