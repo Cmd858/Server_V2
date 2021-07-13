@@ -1,10 +1,8 @@
 # noinspection PyUnresolvedReferences
 import Functions
 import os
-import cgi
 import colorama
 import datetime
-from requests_toolbelt.multipart import decoder
 
 
 class RequestHandler():
@@ -107,7 +105,7 @@ class RequestHandler():
                         #log(data, 'info')
                         data = data[data.index(b'\r\n')+2:]  # lmao so inefficient i think
                         ctype = data[:data.index(b'\r\n')]
-                        log(data, 'info')
+                        #log(data, 'info')
                         data = data[data.index(b'\r\n')+2:]
                         data = data[data.index(b'\r\n')+2:]
                         filedat = data[:-46]  # enough space to remove multipart form boundary
@@ -131,7 +129,7 @@ class RequestHandler():
                     return 'Resource could not be created', 'str', 500
             else:
                 file = checkFiles(path)  # check if the file exists
-                log(file, 'info')
+                #log(file, 'info')
                 if file == None:
                     func = getFunc(path)  # get function reference of requested function
                     if func is not None:  # check if function exists
@@ -141,7 +139,7 @@ class RequestHandler():
                             return out, rtype, response_code  # return output of GET function
                         elif request.command == 'POST':
                             data = request.rfile.read(int(headers['Content-Length']))
-                            log(data, 'data')
+                            #log(data, 'data')
                             out, rtype, response_code = func(args, data)
                             return out, rtype, response_code  # return output of POST function
                         elif request.command == 'PUT':
@@ -154,7 +152,7 @@ class RequestHandler():
                     return file, 'file', 200  # successful request return
         except TypeError:
             return 'Incorrect Method Type', 'str', 400
-        #except Exception as e:
+        except Exception as e:
             log(e, 'warning')
             return 'Internal Server Error', 'str', 500  # return internal server error
 
@@ -193,7 +191,7 @@ class RequestHandler():
             server.send_response(response_code)  # send response code eg 200
             for header in headers:
                 server.send_header(header, headers[header])  # send every header in headers
-            log(data[:30], 'data')
+            #log(data[:30], 'data')
             server.end_headers()  # indicate that all headers have been sent
             server.wfile.write(data)
             server.close_connection = True

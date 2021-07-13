@@ -28,7 +28,7 @@ class MyHandler(BaseHTTPRequestHandler):
         self.port = os.getenv('port')  # set port number
         self.handler = RequestHandler(self.port)  # get RequestHandler
         data, rtype, response_code = self.handler.handleRequestBetter(self)  # handle request and receive data, type and code
-        log((data, rtype, response_code), 'info')
+        #log((data, rtype, response_code), 'info')
         if rtype == 'file':
             self.handler.returnResponse(self, data, response_code, rtype)  # send the response back to requester
         else:
