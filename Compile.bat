@@ -1,1 +1,1 @@
-pyinstaller --add-data C:\Users\Alexander\PycharmProjects\Server_V2\.env;\ --hidden-import pkg_resources --hidden-import colorama --onefile C:\Users\Alexander\PycharmProjects\Server_V2\main.py
+pyinstaller --add-data %~dp0.env;\ --hidden-import pkg_resources --hidden-import colorama --onefile %~dp0\main.py

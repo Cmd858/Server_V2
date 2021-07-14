@@ -30,3 +30,7 @@ and for transferring large files between devices.
 For example if you need to transfer a file between 2 devices, you can use the server as a bridge,
 uploading the file to the server using fileUpload.html and then use the direct link to that file to download
 it on the second device.
+
+#Issues
+If running this from inside a command prompt, make sure to change the working directory to the location of the program
+before running, otherwise it will think it's in a different place to where it really is
