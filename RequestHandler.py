@@ -3,6 +3,7 @@ import Functions
 import os
 import colorama
 import datetime
+import time
 
 
 class RequestHandler():
@@ -29,100 +30,33 @@ class RequestHandler():
             elif request.command == 'DELETE':
                 try:
                     os.remove(f'{os.getcwd()}/files{path}')  # only removal from the files folder is allowed
-                    return 'Resource Successfully Removed', 'str', 500
+                    return 'Resource Successfully Removed', 'str', 200
                 except FileNotFoundError:
-                    return 'Requested Resource Not Found', 'str', 404
-                except Exception as e:  # handle exceptions
-                    log(e, 'warning')
-                    return 'Could not delete the resource', 'str', 500
-            else:
-                file = checkFiles(path)  # check if the file exists
-                log(file, 'info')
-                if file == None:
-                    func = getFunc(path)  # get function reference of requested function
-                    if func is not None:  # check if function exists
-                        args = extractArgs(path)  # get arguments for functions
-                        if request.command == 'GET':  # special cases for each request
-                            out, rtype, response_code = func(args)
-                            return out, rtype, response_code  # return output of GET function
-                        elif request.command == 'POST':
-                            data = request.rfile.read(int(headers['Content-Length']))
-                            log(data, 'data')
-                            out, rtype, response_code = func(args, data)
-                            return out, rtype, response_code  # return output of POST function
-                        elif request.command == 'PUT':
-                            return 'Not Implemented', 'str', 501  # not implemented
-                        else:
-                            return 'Method Not Allowed', 'str', 405  # method not allowed
-                    else:
-                        return 'Resource Not Found', 'str', 404  # return not found error
-                else:
-                    return file, 'file', 200  # successful request return
-        except TypeError:
-            return 'Incorrect Method Type', 'str', 400
-        except Exception as e:
-            log(e, 'warning')
-            return 'Internal Server Error', 'str', 500  # return internal server error
-
-    def handleRequestBetter(self, request):  # request parameter takes myHandler class
-        try:
-            path = request.path  # get path in local variable
-            headers = request.headers  # get headers in local variable
-            log(request.command, 'info')
-            if request.command == 'PUT':
-                try:
-                    file = open(f'{os.getcwd()}/files{path}', 'w+b')  # create and open file
-                    data = request.rfile.read(int(headers['Content-Length']))  # read data from request body
-                    file.write(data)  # write data to file
-                    file.close()
-                    return 'Resource Created', 'str', 201
-                except KeyError:
-                    return 'Content-Length Header Required', 'str', 411  # require content-length header
-                except Exception as e:
-                    log(e, 'warning')
-                    return 'Resource could not be created', 'str', 500
-            elif request.command == 'DELETE':
-                try:
-                    os.remove(f'{os.getcwd()}/files{path}')  # only removal from the files folder is allowed
-                    return 'Resource Successfully Removed', 'str', 500
-                except FileNotFoundError:
+                    log('File Not Found', 'clientError')
                     return 'Requested Resource Not Found', 'str', 404
                 except Exception as e:  # handle exceptions
                     log(e, 'warning')
                     return 'Could not delete the resource', 'str', 500
             elif request.command == 'POST':
                 try:
-                    log(path, 'data')
-                    data = request.rfile.read(int(headers['Content-Length']))  # read data from request body
-                        # log(part, 'data')
-                    #log(data, 'data')
-                    #data = b'teststr'
-                    #todo make multipart parser
-                    if data.startswith(b'------WebKitFormBoundary'):
-                        #log(data, 'info')
-                        data = data[data.index(b'\r\n')+2:]  # snip out boundary
-                        disposition = data[:data.index(b'\r\n')]
-                        #log(data, 'info')
-                        data = data[data.index(b'\r\n')+2:]  # lmao so inefficient i think
-                        ctype = data[:data.index(b'\r\n')]
-                        #log(data, 'info')
-                        data = data[data.index(b'\r\n')+2:]
-                        data = data[data.index(b'\r\n')+2:]
-                        filedat = data[:-46]  # enough space to remove multipart form boundary
-                        #log(data, 'info')
-                        #log(disposition, 'data')
-                        #log(ctype, 'data')
-                        #log(filedat, 'data')
-                        filenamestart = disposition.index(b'filename="')+10
-                        fname = disposition[filenamestart:disposition.index(b'"', filenamestart)].decode('utf8')
-                        #log(fname, 'data')
-                        file = open(f'{os.getcwd()}/files/{fname}', 'w+b')  # create and open file
-                        file.write(filedat)  # write data to file
-                        file.close()  # TODO: probs unnecessary but maybe lazy iterator with yield
-                    else:
-                        return 'Invalid Form Type', 'str', 501
+                    parsestr = multiPartHeaders(request.rfile)
+                    parselist = parsestr.split(b'\r\n')
+                    filenamestart = parselist[1].index(b'filename="') + 10
+                    fname = parselist[1][filenamestart:parselist[1].index(b'"', filenamestart)].decode('utf8')
+                    log(f'Receiving {fname}', 'data')
+                    datsize = int(headers['Content-Length']) - len(parsestr)
+                    file = open(f'{os.getcwd()}/files/{fname}', 'w+b')  # create and open file
+                    start = time.time()
+                    for datChunk in multiPartParse(request.rfile, int(headers['Content-Length']) - len(parsestr)):
+                        file.write(datChunk)  # write data to file
+                    end = time.time()
+                    elapsed = max(int((end-start)*1000)/1000, 0.001)  # prevent zero division error
+                    file.close()
+                    log(f'Wrote {datsize} bytes in {elapsed} seconds, approx {int(datsize/(elapsed))} B/s',
+                        'info')
                     return 'Resource Created', 'str', 201
-                except KeyError:
+                except KeyError as e:
+                    log(e, 'clientError')
                     return 'Content-Length Header Required', 'str', 411  # require content-length header
                 except Exception as e:
                     log(e, 'warning')
@@ -143,14 +77,18 @@ class RequestHandler():
                             out, rtype, response_code = func(args, data)
                             return out, rtype, response_code  # return output of POST function
                         elif request.command == 'PUT':
+                            log('Not Implemented', 'clientError')
                             return 'Not Implemented', 'str', 501  # not implemented
                         else:
+                            log('Method Not Allowed', 'clientError')
                             return 'Method Not Allowed', 'str', 405  # method not allowed
                     else:
+                        log('Resource Not Found', 'clientError')
                         return 'Resource Not Found', 'str', 404  # return not found error
                 else:
                     return file, 'file', 200  # successful request return
-        except TypeError:
+        except TypeError as e:
+            log(e, 'clientError')
             return 'Incorrect Method Type', 'str', 400
         except Exception as e:
             log(e, 'warning')
@@ -245,11 +183,29 @@ def extractArgs(path):
     return args  # return arguments
 
 def log(msg, msgType):
-    clrs = {'warning': colorama.Fore.RED, 'info': colorama.Fore.WHITE, 'clientError': colorama.Fore.YELLOW}
-    now = datetime.datetime.now()
-    modnow = now.strftime(f'%Y-%m-%d %H:%M:%S')
-    prtstr = f'[{modnow}] {msg}'
-    if msgType in clrs:
-        print(f'{clrs[msgType]}{prtstr}')
-    else:
-        print(f'{colorama.Fore.CYAN}{prtstr}')
+    try:
+        clrs = {'warning': colorama.Fore.RED,
+                'info': colorama.Fore.WHITE,
+                'clientError': colorama.Fore.YELLOW,
+                'data': colorama.Fore.CYAN}
+        now = datetime.datetime.now()
+        modnow = now.strftime(f'%Y-%m-%d %H:%M:%S')
+        prtstr = f'[{modnow}] {msg}'
+        if msgType in clrs:
+            print(f'{clrs[msgType]}{prtstr}')
+        else:
+            print(f'{colorama.Fore.GREEN}{prtstr}')
+    except Exception as e:
+        print(e)
+
+def multiPartParse(rfile, length):
+    while length >= 4096+46:  # +46 to strip webKitFormBoundary
+        yield rfile.read(4096)
+        length -= 4096
+    yield rfile.read(length-46)  # -46 ^
+
+def multiPartHeaders(rfile):
+    bstr = b''
+    while bstr.count(b'\r\n') < 4:
+        bstr += rfile.read(1)
+    return bstr
